@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,7 +45,31 @@ func main() {
 	}
 
 	var cms core.ConfigMapList
-	err = c.List(context.TODO(), &cms)
+	err = c.List(context.TODO(), &cms, client.InNamespace(""))
+	if err != nil {
+		panic(err)
+	}
+	for _, obj := range cms.Items {
+		fmt.Println(obj.Name)
+	}
+
+	im := false
+	cm := core.ConfigMap{
+		// TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bin-cm2",
+			Namespace: "default",
+		},
+		Immutable: &im,
+		Data: map[string]string{
+			"data.txt": `{"name": "tamal"}`,
+		},
+		BinaryData: map[string][]byte{
+			// "data.txt": []byte(`{"name": "tamal"}`),
+			"d2.txt": []byte(`{"name": "tamal"}`),
+		},
+	}
+	err = c.Update(context.TODO(), &cm)
 	if err != nil {
 		panic(err)
 	}
